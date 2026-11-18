@@ -17,7 +17,19 @@ SOURCE_URL = (
     "https://www.allianz.ie/content/dam/onemarketing/azie/allianz-ireland/"
     "en_us/documents/regulatory-information/eaa/allianz-sfcr-2024.pdf"
 )
+SOURCE_LISTING_URL = "https://www.allianz.ie/about/about-allianz/regulatory-information.html"
+DOCUMENT_ID = "allianz-plc-sfcr-2024"
+DOCUMENT_TITLE = "Solvency and Financial Condition Report"
+PUBLISHER = "Allianz p.l.c."
 REPORT_YEAR = 2024
+PERIOD_END = "2024-12-31"
+METRIC_SPECS = {
+    "solvency_ratio": ("%", "Reported solvency coverage ratio of own funds to SCR."),
+    "scr": ("EUR million", "Solvency Capital Requirement under Solvency II."),
+    "eligible_own_funds": (
+        "EUR million", "Basic own funds eligible to cover the Solvency Capital Requirement."
+    ),
+}
 NUMBER = r"\d+(?:,\d{3})*(?:\.\d+)?"
 TABLE_CAPTION = (
     "Table 25: Overview of diversified risk capital, Own Funds "
@@ -30,9 +42,11 @@ TABLE_PATTERN = re.compile(
     rf"(?P<ratio>Coverage Ratio (?P<ratio_a>{NUMBER})% (?P<ratio_b>{NUMBER})%) "
     + re.escape(TABLE_CAPTION)
 )
+ELIGIBLE_LABEL = (
+    "amount of Basic Own Funds that is eligible to cover the Solvency Capital Requirement"
+)
 ELIGIBLE_PATTERN = re.compile(
-    r"amount of Basic Own Funds that is eligible to cover the "
-    rf"Solvency Capital Requirement is €(?P<value>{NUMBER})m "
+    re.escape(ELIGIBLE_LABEL) + rf" is €(?P<value>{NUMBER})m "
     rf"\((?P<previous_year>\d{{4}}): €(?P<previous_value>{NUMBER})m\)"
 )
 
@@ -52,17 +66,77 @@ def decimal(raw):
     return Decimal(raw.replace(",", ""))
 
 
-def metric(raw, unit, label, page, section, evidence, basis):
+def validate_reported_metric(record):
+    """Validate this demo's reported records; calculated/estimated figures are unsupported."""
+    if not isinstance(record, dict):
+        raise ValueError("A reported figure must be a record with explicit evidence.")
+    if record.get("figure_type") != "Reported" or any(
+        key in record for key in ("formula", "inputs", "source_inputs")
+    ):
+        raise ValueError("Only Reported figures are supported; calculations and estimates are unsupported.")
+    try:
+        unit, definition = METRIC_SPECS[record["metric"]]
+        if (
+            record["entity"] != PUBLISHER
+            or type(record["report_year"]) is not int
+            or record["report_year"] != REPORT_YEAR
+            or record["reporting_period"] != {"type": "point_in_time", "date": PERIOD_END}
+            or record["reporting_basis"]["scope"] != "solo"
+            or record["reporting_basis"]["framework"] != "Solvency II"
+            or record["unit"] != unit or record["definition"] != definition
+        ):
+            raise ValueError("Unsupported metric, entity, period, unit, definition or reporting basis.")
+        raw, value = record["raw_value"], record["value"]
+        if (
+            not isinstance(raw, str) or not re.fullmatch(NUMBER, raw)
+            or type(value) not in (int, float) or decimal(raw) != Decimal(str(value))
+        ):
+            raise ValueError("A figure must retain its explicit reported numeric value.")
+        for evidence in (record["source"], record["reporting_basis"]["source"]):
+            if (
+                evidence["document_id"] != DOCUMENT_ID
+                or type(evidence["pdf_page"]) is not int or evidence["pdf_page"] < 1
+                or not evidence["section"].strip() or not evidence["text"].strip()
+            ):
+                raise ValueError("A reported figure requires document, page and source evidence.")
+        if raw not in record["source"]["text"]:
+            raise ValueError("The reported numeric value is missing from its source excerpt.")
+    except (KeyError, TypeError, AttributeError) as error:
+        raise ValueError("Missing or invalid reported-figure evidence or comparison context.") from error
+
+
+def assert_comparable(left, right):
+    """Guard comparisons; only the same measure at this report's supported date is allowed."""
+    try:
+        validate_reported_metric(left)
+        validate_reported_metric(right)
+        if left["metric"] != right["metric"]:
+            raise ValueError("Different metric definitions cannot be compared.")
+    except ValueError as error:
+        raise ValueError(f"Incompatible comparison: {error}") from error
+
+
+def metric(name, raw, unit, label, page, section, evidence, basis):
     value = decimal(raw)
-    return {
+    record = {
+        "metric": name,
+        "entity": PUBLISHER,
+        "definition": METRIC_SPECS[name][1],
+        "figure_type": "Reported",
         "value": int(value) if value == value.to_integral_value() else float(value),
         "raw_value": raw,
         "unit": unit,
         "report_year": REPORT_YEAR,
+        "reporting_period": {"type": "point_in_time", "date": PERIOD_END},
         "reporting_basis": basis,
         "source_label": label,
-        "source": {"pdf_page": page, "section": section, "text": evidence},
+        "source": {
+            "document_id": DOCUMENT_ID, "pdf_page": page, "section": section,
+            "table": section if section.startswith("Table ") else None, "text": evidence,
+        },
     }
+    validate_reported_metric(record)
+    return record
 
 
 def extract_from_pages(page_texts):
@@ -76,15 +150,21 @@ def extract_from_pages(page_texts):
         "reporting period on the cover",
     )
     if (
-        "Allianz p.l.c." not in cover
-        or "Solvency and Financial Condition Report" not in cover
+        cover.count(PUBLISHER) != 1
+        or cover.count(DOCUMENT_TITLE) != 1
         or int(period) != REPORT_YEAR
     ):
         raise ValueError("Only Allianz p.l.c.'s 2024 SFCR is supported.")
 
-    table_page, table = exactly_one(
-        [(i, match) for i, text in enumerate(pages, 1)
-         for match in TABLE_PATTERN.finditer(text)],
+    # Count candidate captions before matching values: a valid table must not
+    # hide a second incomplete or conflicting copy of the same required table.
+    table_page = exactly_one(
+        [i for i, text in enumerate(pages, 1)
+         for _ in re.finditer(re.escape(TABLE_CAPTION), text)],
+        "Table 25 source caption",
+    )
+    table = exactly_one(
+        list(TABLE_PATTERN.finditer(pages[table_page - 1])),
         "complete Table 25 with units, years and all three rows",
     )
     years = [int(table["year_a"]), int(table["year_b"])]
@@ -92,27 +172,39 @@ def extract_from_pages(page_texts):
         raise ValueError("Table 25 does not identify the expected reporting years.")
     column = "a" if years[0] == REPORT_YEAR else "b"
 
-    eligible_page, eligible = exactly_one(
-        [(i, match) for i, text in enumerate(pages, 1)
+    eligible_page = exactly_one(
+        [i for i, text in enumerate(pages, 1)
          if "E.1.2 Structure amount and quality of Own Funds" in text
-         for match in ELIGIBLE_PATTERN.finditer(text)],
+         for _ in re.finditer(re.escape(ELIGIBLE_LABEL), text)],
+        "eligible-own-funds source statement",
+    )
+    eligible = exactly_one(
+        list(ELIGIBLE_PATTERN.finditer(pages[eligible_page - 1])),
         "explicit statement of own funds eligible to cover the SCR",
     )
-    eligible_year_header = re.search(
-        rf"In €[’‘']m as at 31 December {REPORT_YEAR}\b", pages[eligible_page - 1]
+    eligible_year_header = exactly_one(
+        list(re.finditer(r"In €[’‘']m as at 31 December (\d{4})\b", pages[eligible_page - 1])),
+        "eligible-own-funds year header",
     )
-    if int(eligible["previous_year"]) != REPORT_YEAR - 1 or not eligible_year_header:
+    if int(eligible["previous_year"]) != REPORT_YEAR - 1 or int(eligible_year_header[1]) != REPORT_YEAR:
         raise ValueError("The eligible-own-funds reporting year is not confirmed.")
 
     basis_text = pages[eligible_page - 1]
-    scope = re.search(r"Total Basic Own Funds after adjustments \((solo)\)", basis_text)
-    framework = re.search(r"(Solvency II) Directive 2009/138/EC", basis_text)
-    if not scope or not framework:
+    scope = exactly_one(
+        list(re.finditer(r"Total Basic Own Funds after adjustments \(([^)]+)\)", basis_text)),
+        "own-funds scope statement",
+    )
+    framework = exactly_one(
+        list(re.finditer(r"(Solvency II) Directive 2009/138/EC", basis_text)),
+        "Solvency II framework statement",
+    )
+    if scope[1] != "solo":
         raise ValueError("The expected solo Solvency II reporting basis is not confirmed.")
     basis = {
         "scope": scope[1],
         "framework": framework[1],
         "source": {
+            "document_id": DOCUMENT_ID,
             "pdf_page": eligible_page,
             "section": "E.1.2 Structure amount and quality of Own Funds",
             "text": framework[0] + "\n" + scope[0],
@@ -131,27 +223,28 @@ def extract_from_pages(page_texts):
     )
     metrics = {
         "solvency_ratio": metric(
-            table[f"ratio_{column}"], "%", "Coverage Ratio",
+            "solvency_ratio", table[f"ratio_{column}"], "%", "Coverage Ratio",
             table_page, "Table 25", table_evidence, basis,
         ),
         "scr": metric(
-            table[f"scr_{column}"], "EUR million", "SCR",
+            "scr", table[f"scr_{column}"], "EUR million", "SCR",
             table_page, "Table 25", table_evidence, basis,
         ),
         "eligible_own_funds": metric(
-            eligible["value"], "EUR million",
+            "eligible_own_funds", eligible["value"], "EUR million",
             "Basic Own Funds eligible to cover the Solvency Capital Requirement",
             eligible_page, "E.1.2 Structure amount and quality of Own Funds",
             eligible[0] + "\n" + eligible_year_header[0], basis,
         ),
     }
     return {
-        "entity": "Allianz p.l.c.",
+        "entity": PUBLISHER,
         "report_year": REPORT_YEAR,
-        "report_period_end": f"{REPORT_YEAR}-12-31",
+        "report_period_end": PERIOD_END,
         "method": "Report-specific rules on PyMuPDF page text; no OCR or AI model.",
         "page_numbering": "1-based PDF page position, including the cover.",
         "report_period_source": {
+            "document_id": DOCUMENT_ID,
             "pdf_page": 1,
             "text": f"For the year ended 31 December {period}",
         },
@@ -168,6 +261,20 @@ def extract_pdf(pdf_path):
         pages = [page.get_text("text", sort=True) for page in document]
     result = extract_from_pages(pages)
     result["document"] = {
+        "id": DOCUMENT_ID,
+        "title": DOCUMENT_TITLE,
+        "publisher": PUBLISHER,
+        "publication_date": None,
+        "publication_date_status": "unknown",
+        "publication_date_note": (
+            "No publication date verified in the official PDF or issuer listing. "
+            "The reporting year and PDF creation/modification timestamps are not publication dates."
+        ),
+        "metadata_sources": [SOURCE_URL, SOURCE_LISTING_URL],
+        "cover_source": {
+            "document_id": DOCUMENT_ID, "pdf_page": 1,
+            "text": f"{PUBLISHER}\n{DOCUMENT_TITLE}\nFor the year ended 31 December {REPORT_YEAR}",
+        },
         "filename": path.name,
         "source_url": SOURCE_URL,
         "sha256": hashlib.sha256(payload).hexdigest(),

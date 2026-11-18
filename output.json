@@ -5,19 +5,29 @@
   "method": "Report-specific rules on PyMuPDF page text; no OCR or AI model.",
   "page_numbering": "1-based PDF page position, including the cover.",
   "report_period_source": {
+    "document_id": "allianz-plc-sfcr-2024",
     "pdf_page": 1,
     "text": "For the year ended 31 December 2024"
   },
   "metrics": {
     "solvency_ratio": {
+      "metric": "solvency_ratio",
+      "entity": "Allianz p.l.c.",
+      "definition": "Reported solvency coverage ratio of own funds to SCR.",
+      "figure_type": "Reported",
       "value": 169,
       "raw_value": "169",
       "unit": "%",
       "report_year": 2024,
+      "reporting_period": {
+        "type": "point_in_time",
+        "date": "2024-12-31"
+      },
       "reporting_basis": {
         "scope": "solo",
         "framework": "Solvency II",
         "source": {
+          "document_id": "allianz-plc-sfcr-2024",
           "pdf_page": 67,
           "section": "E.1.2 Structure amount and quality of Own Funds",
           "text": "Solvency II Directive 2009/138/EC\nTotal Basic Own Funds after adjustments (solo)"
@@ -25,20 +35,31 @@
       },
       "source_label": "Coverage Ratio",
       "source": {
+        "document_id": "allianz-plc-sfcr-2024",
         "pdf_page": 70,
         "section": "Table 25",
+        "table": "Table 25",
         "text": "€’m YE 2024 YE 2023\nSCR 160 166\nOwn Funds 271 329\nCoverage Ratio 169% 198%\nTable 25: Overview of diversified risk capital, Own Funds and solvency coverage ratio"
       }
     },
     "scr": {
+      "metric": "scr",
+      "entity": "Allianz p.l.c.",
+      "definition": "Solvency Capital Requirement under Solvency II.",
+      "figure_type": "Reported",
       "value": 160,
       "raw_value": "160",
       "unit": "EUR million",
       "report_year": 2024,
+      "reporting_period": {
+        "type": "point_in_time",
+        "date": "2024-12-31"
+      },
       "reporting_basis": {
         "scope": "solo",
         "framework": "Solvency II",
         "source": {
+          "document_id": "allianz-plc-sfcr-2024",
           "pdf_page": 67,
           "section": "E.1.2 Structure amount and quality of Own Funds",
           "text": "Solvency II Directive 2009/138/EC\nTotal Basic Own Funds after adjustments (solo)"
@@ -46,20 +67,31 @@
       },
       "source_label": "SCR",
       "source": {
+        "document_id": "allianz-plc-sfcr-2024",
         "pdf_page": 70,
         "section": "Table 25",
+        "table": "Table 25",
         "text": "€’m YE 2024 YE 2023\nSCR 160 166\nOwn Funds 271 329\nCoverage Ratio 169% 198%\nTable 25: Overview of diversified risk capital, Own Funds and solvency coverage ratio"
       }
     },
     "eligible_own_funds": {
+      "metric": "eligible_own_funds",
+      "entity": "Allianz p.l.c.",
+      "definition": "Basic own funds eligible to cover the Solvency Capital Requirement.",
+      "figure_type": "Reported",
       "value": 271.1,
       "raw_value": "271.1",
       "unit": "EUR million",
       "report_year": 2024,
+      "reporting_period": {
+        "type": "point_in_time",
+        "date": "2024-12-31"
+      },
       "reporting_basis": {
         "scope": "solo",
         "framework": "Solvency II",
         "source": {
+          "document_id": "allianz-plc-sfcr-2024",
           "pdf_page": 67,
           "section": "E.1.2 Structure amount and quality of Own Funds",
           "text": "Solvency II Directive 2009/138/EC\nTotal Basic Own Funds after adjustments (solo)"
@@ -67,13 +99,30 @@
       },
       "source_label": "Basic Own Funds eligible to cover the Solvency Capital Requirement",
       "source": {
+        "document_id": "allianz-plc-sfcr-2024",
         "pdf_page": 67,
         "section": "E.1.2 Structure amount and quality of Own Funds",
+        "table": null,
         "text": "amount of Basic Own Funds that is eligible to cover the Solvency Capital Requirement is €271.1m (2023: €329.1m)\nIn €’m as at 31 December 2024"
       }
     }
   },
   "document": {
+    "id": "allianz-plc-sfcr-2024",
+    "title": "Solvency and Financial Condition Report",
+    "publisher": "Allianz p.l.c.",
+    "publication_date": null,
+    "publication_date_status": "unknown",
+    "publication_date_note": "No publication date verified in the official PDF or issuer listing. The reporting year and PDF creation/modification timestamps are not publication dates.",
+    "metadata_sources": [
+      "https://www.allianz.ie/content/dam/onemarketing/azie/allianz-ireland/en_us/documents/regulatory-information/eaa/allianz-sfcr-2024.pdf",
+      "https://www.allianz.ie/about/about-allianz/regulatory-information.html"
+    ],
+    "cover_source": {
+      "document_id": "allianz-plc-sfcr-2024",
+      "pdf_page": 1,
+      "text": "Allianz p.l.c.\nSolvency and Financial Condition Report\nFor the year ended 31 December 2024"
+    },
     "filename": "allianz_sfcr_2024.pdf",
     "source_url": "https://www.allianz.ie/content/dam/onemarketing/azie/allianz-ireland/en_us/documents/regulatory-information/eaa/allianz-sfcr-2024.pdf",
     "sha256": "5863158ee859a13b8f93822123b5253abfc40e5de189f798da729ea8fda20768",
