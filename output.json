@@ -1,0 +1,83 @@
+{
+  "entity": "Allianz p.l.c.",
+  "report_year": 2024,
+  "report_period_end": "2024-12-31",
+  "method": "Report-specific rules on PyMuPDF page text; no OCR or AI model.",
+  "page_numbering": "1-based PDF page position, including the cover.",
+  "report_period_source": {
+    "pdf_page": 1,
+    "text": "For the year ended 31 December 2024"
+  },
+  "metrics": {
+    "solvency_ratio": {
+      "value": 169,
+      "raw_value": "169",
+      "unit": "%",
+      "report_year": 2024,
+      "reporting_basis": {
+        "scope": "solo",
+        "framework": "Solvency II",
+        "source": {
+          "pdf_page": 67,
+          "section": "E.1.2 Structure amount and quality of Own Funds",
+          "text": "Solvency II Directive 2009/138/EC\nTotal Basic Own Funds after adjustments (solo)"
+        }
+      },
+      "source_label": "Coverage Ratio",
+      "source": {
+        "pdf_page": 70,
+        "section": "Table 25",
+        "text": "€’m YE 2024 YE 2023\nSCR 160 166\nOwn Funds 271 329\nCoverage Ratio 169% 198%\nTable 25: Overview of diversified risk capital, Own Funds and solvency coverage ratio"
+      }
+    },
+    "scr": {
+      "value": 160,
+      "raw_value": "160",
+      "unit": "EUR million",
+      "report_year": 2024,
+      "reporting_basis": {
+        "scope": "solo",
+        "framework": "Solvency II",
+        "source": {
+          "pdf_page": 67,
+          "section": "E.1.2 Structure amount and quality of Own Funds",
+          "text": "Solvency II Directive 2009/138/EC\nTotal Basic Own Funds after adjustments (solo)"
+        }
+      },
+      "source_label": "SCR",
+      "source": {
+        "pdf_page": 70,
+        "section": "Table 25",
+        "text": "€’m YE 2024 YE 2023\nSCR 160 166\nOwn Funds 271 329\nCoverage Ratio 169% 198%\nTable 25: Overview of diversified risk capital, Own Funds and solvency coverage ratio"
+      }
+    },
+    "eligible_own_funds": {
+      "value": 271.1,
+      "raw_value": "271.1",
+      "unit": "EUR million",
+      "report_year": 2024,
+      "reporting_basis": {
+        "scope": "solo",
+        "framework": "Solvency II",
+        "source": {
+          "pdf_page": 67,
+          "section": "E.1.2 Structure amount and quality of Own Funds",
+          "text": "Solvency II Directive 2009/138/EC\nTotal Basic Own Funds after adjustments (solo)"
+        }
+      },
+      "source_label": "Basic Own Funds eligible to cover the Solvency Capital Requirement",
+      "source": {
+        "pdf_page": 67,
+        "section": "E.1.2 Structure amount and quality of Own Funds",
+        "text": "amount of Basic Own Funds that is eligible to cover the Solvency Capital Requirement is €271.1m (2023: €329.1m)\nIn €’m as at 31 December 2024"
+      }
+    }
+  },
+  "document": {
+    "filename": "allianz_sfcr_2024.pdf",
+    "source_url": "https://www.allianz.ie/content/dam/onemarketing/azie/allianz-ireland/en_us/documents/regulatory-information/eaa/allianz-sfcr-2024.pdf",
+    "sha256": "5863158ee859a13b8f93822123b5253abfc40e5de189f798da729ea8fda20768",
+    "page_count": 93,
+    "source_url_note": "Official reference URL; the supplied file is identified by SHA-256."
+  }
+}
